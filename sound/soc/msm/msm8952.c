@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
+ *  GNU General Public License for more details.
  */
 
 #include <linux/clk.h>
@@ -1552,6 +1552,59 @@ static void *def_msm8952_wcd_mbhc_cal(void)
 	return msm8952_wcd_cal;
 }
 
+
+static int ext_spk_amp_gpio = -1;
+static int ext_ult_spk_amp_gpio = -1;
+//static int ext_ult_lo_amp_gpio = -1;
+static struct regulator *ext_spk_amp_regulator;
+
+static int msm8974_liquid_ext_spk_power_amp_init(struct platform_device *pdev)
+{
+	int ret = 0;
+
+	ext_spk_amp_gpio = of_get_named_gpio(pdev->dev.of_node,
+		"qcom,ext-spk-amp-gpio", 0);
+	if (ext_spk_amp_gpio >= 0) {
+		ret = gpio_request(ext_spk_amp_gpio, "ext_spk_amp_gpio");
+		if (ret) {
+			pr_err("%s: gpio_request failed for ext_spk_amp_gpio.\n",
+				__func__);
+			return -EINVAL;
+		}
+		gpio_direction_output(ext_spk_amp_gpio, 0);
+
+		if (ext_spk_amp_regulator == NULL) {
+			ext_spk_amp_regulator = regulator_get(&pdev->dev,
+									"qcom,ext-spk-amp");
+
+			if (IS_ERR(ext_spk_amp_regulator)) {
+				pr_err("%s: Cannot get regulator %s.\n",
+					__func__, "qcom,ext-spk-amp");
+
+				gpio_free(ext_spk_amp_gpio);
+				return PTR_ERR(ext_spk_amp_regulator);
+			}
+		}
+	}
+
+	ext_ult_spk_amp_gpio = of_get_named_gpio(pdev->dev.of_node,
+		"qcom,ext-ult-spk-amp-gpio", 0);
+
+	if (ext_ult_spk_amp_gpio >= 0) {
+		ret = gpio_request(ext_ult_spk_amp_gpio,
+						   "ext_ult_spk_amp_gpio");
+		if (ret) {
+			pr_err("%s: gpio_request failed for ext-ult_spk-amp-gpio.\n",
+				__func__);
+			return -EINVAL;
+		}
+		gpio_direction_output(ext_ult_spk_amp_gpio, 0);
+	}
+
+	return 0;
+}
+
+
 static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_codec *codec = rtd->codec;
@@ -1563,7 +1616,7 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_add_codec_controls(codec, msm_snd_controls,
 			ARRAY_SIZE(msm_snd_controls));
-
+	
 	snd_soc_dapm_new_controls(dapm, msm8952_dapm_widgets,
 			ARRAY_SIZE(msm8952_dapm_widgets));
 
@@ -2706,7 +2759,7 @@ static int msm8952_populate_dai_link_component_of_node(
 	struct device *cdev = card->dev;
 	struct snd_soc_dai_link *dai_link = card->dai_link;
 	struct device_node *phandle;
-
+	
 	if (!cdev) {
 		pr_err("%s: Sound card device memory NULL\n", __func__);
 		return -ENODEV;
@@ -2738,6 +2791,7 @@ static int msm8952_populate_dai_link_component_of_node(
 				ret = -ENODEV;
 				goto err;
 			}
+			pr_err("== Encontré al platform-name: %s\n",dai_link[i].platform_name);
 			dai_link[i].platform_of_node = phandle;
 			dai_link[i].platform_name = NULL;
 		}
@@ -2757,6 +2811,8 @@ cpu_dai:
 				ret = -ENODEV;
 				goto err;
 			}
+			pr_err("-- Encontré al cpu_dai: %s\n",dai_link[i].cpu_dai_name);
+		
 			dai_link[i].cpu_of_node = phandle;
 			dai_link[i].cpu_dai_name = NULL;
 		}
@@ -2776,6 +2832,8 @@ codec_dai:
 				ret = -ENODEV;
 				goto err;
 			}
+			pr_err("++ Encontré al codec_dai: %s\n",dai_link[i].codec_name);
+
 			dai_link[i].codec_of_node = phandle;
 			dai_link[i].codec_name = NULL;
 		}
@@ -3172,12 +3230,23 @@ parse_mclk_freq:
 	if (ret)
 		goto err;
 
+	//Agregado por Eduardo Noyer
+	pr_err("Intentando iniciar a mano el gpio");
+	ret = msm8974_liquid_ext_spk_power_amp_init(pdev);
+	if (ret) {
+		pr_err("%s: LiQUID 8974 CLASS_D PAs init failed (%d)\n",
+			__func__, ret);
+		goto err;
+	}
+	
+
 	ret = msm8952_populate_dai_link_component_of_node(card);
 	if (ret) {
 		ret = -EPROBE_DEFER;
 		goto err;
 	}
-
+	
+		
 	ret = snd_soc_register_card(card);
 	if (ret) {
 		dev_err(&pdev->dev, "snd_soc_register_card failed (%d)\n",
@@ -3212,6 +3281,10 @@ static int msm8952_asoc_machine_remove(struct platform_device *pdev)
 	struct msm8916_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 	int i;
 
+	//Agregado por Eduardo Noyer
+	if (ext_spk_amp_regulator)
+		regulator_put(ext_spk_amp_regulator);
+	
 	if (pdata->vaddr_gpio_mux_spkr_ctl)
 		iounmap(pdata->vaddr_gpio_mux_spkr_ctl);
 	if (pdata->vaddr_gpio_mux_mic_ctl)

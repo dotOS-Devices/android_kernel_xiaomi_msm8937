@@ -40,26 +40,16 @@ static ssize_t brightness_store(struct device *dev,
 {
 	struct led_classdev *led_cdev = dev_get_drvdata(dev);
 	unsigned long state;
-	ssize_t ret;
-
-	mutex_lock(&led_cdev->led_access);
-
-	if (led_sysfs_is_disabled(led_cdev)) {
-		ret = -EBUSY;
-		goto unlock;
-	}
+	ssize_t ret = -EINVAL;
 
 	ret = kstrtoul(buf, 10, &state);
 	if (ret)
-		goto unlock;
+		return ret;
 
 	led_cdev->usr_brightness_req = state;
 	__led_set_brightness(led_cdev, state);
 
-	ret = size;
-unlock:
-	mutex_unlock(&led_cdev->led_access);
-	return ret;
+	return size;
 }
 static DEVICE_ATTR_RW(brightness);
 
@@ -239,7 +229,6 @@ int led_classdev_register(struct device *parent, struct led_classdev *led_cdev)
 #ifdef CONFIG_LEDS_TRIGGERS
 	init_rwsem(&led_cdev->trigger_lock);
 #endif
-	mutex_init(&led_cdev->led_access);
 	/* add to the list of leds */
 	down_write(&leds_list_lock);
 	list_add_tail(&led_cdev->node, &leds_list);
@@ -293,8 +282,6 @@ void led_classdev_unregister(struct led_classdev *led_cdev)
 	down_write(&leds_list_lock);
 	list_del(&led_cdev->node);
 	up_write(&leds_list_lock);
-
-	mutex_destroy(&led_cdev->led_access);
 }
 EXPORT_SYMBOL_GPL(led_classdev_unregister);
 

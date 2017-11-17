@@ -37,14 +37,6 @@ ssize_t led_trigger_store(struct device *dev, struct device_attribute *attr,
 	char trigger_name[TRIG_NAME_MAX];
 	struct led_trigger *trig;
 	size_t len;
-	int ret = count;
-
-	mutex_lock(&led_cdev->led_access);
-
-	if (led_sysfs_is_disabled(led_cdev)) {
-		ret = -EBUSY;
-		goto unlock;
-	}
 
 	trigger_name[sizeof(trigger_name) - 1] = '\0';
 	strncpy(trigger_name, buf, sizeof(trigger_name) - 1);
@@ -55,7 +47,7 @@ ssize_t led_trigger_store(struct device *dev, struct device_attribute *attr,
 
 	if (!strcmp(trigger_name, "none")) {
 		led_trigger_remove(led_cdev);
-		goto unlock;
+		return count;
 	}
 
 	down_read(&triggers_list_lock);
@@ -66,14 +58,12 @@ ssize_t led_trigger_store(struct device *dev, struct device_attribute *attr,
 			up_write(&led_cdev->trigger_lock);
 
 			up_read(&triggers_list_lock);
-			goto unlock;
+			return count;
 		}
 	}
 	up_read(&triggers_list_lock);
 
-unlock:
-	mutex_unlock(&led_cdev->led_access);
-	return ret;
+	return -EINVAL;
 }
 EXPORT_SYMBOL_GPL(led_trigger_store);
 
