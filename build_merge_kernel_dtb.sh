@@ -19,7 +19,7 @@ echo "> COMBINANDO Kernel con DTB en kernel.img-dtb"
 cat arch/arm64/boot/Image.gz arch/arm64/boot/santoni-fdt.dtb > arch/arm64/boot/kernel.img-dtb
 echo ""
 echo "> EMPAQUETANDO Kernel..."
-./../mkbootimg/mkbootimg --kernel arch/arm64/boot/kernel.img-dtb --ramdisk arch/arm64/boot/boot.img-ramdisk.cpio.gz --cmdline 'sched_enable_hmp=1 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci earlycon=msm_hsl_uart,0x78af000 androidboot.selinux=permissive buildvariant=userdebug androidboot.emmc=true androidboot.verifiedbootstate=orange androidboot.veritymode=enforcing androidboot.keymaster=1 androidboot.serialno=4d44ca9e7cf4 device_locked=0 androidboot.baseband=msm ' --pagesize 2048 --base 0x80000000 --ramdiskaddr 0x81000000 -o arch/arm64/boot/boot.img
+./../mkbootimg/mkbootimg --kernel arch/arm64/boot/Image.gz-dtb --ramdisk arch/arm64/boot/boot.img-ramdisk.cpio.gz --cmdline 'sched_enable_hmp=1 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci earlycon=msm_hsl_uart,0x78af000 androidboot.selinux=permissive buildvariant=userdebug androidboot.emmc=true androidboot.verifiedbootstate=orange androidboot.veritymode=enforcing androidboot.keymaster=1 androidboot.serialno=4d44ca9e7cf4 device_locked=0 androidboot.baseband=msm ' --pagesize 2048 --base 0x80000000 --ramdiskaddr 0x81000000 -o arch/arm64/boot/boot.img
 echo "> ELIMINANDO MODULOS ANTERIORES"
 rm -rf /media/psf/Home/Desktop/kmodules
 mkdir /media/psf/Home/Desktop/kmodules
