@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
+ * GNU General Public License for more details.
  */
 
 #include <linux/clk.h>
@@ -52,6 +52,9 @@
 #define MAX_WSA_CODEC_NAME_LENGTH 80
 #define MSM_DT_MAX_PROP_SIZE 80
 
+//extern unsigned char AW87319_HW_ON(void);
+//extern unsigned char AW87319_HW_OFF(void);
+unsigned char AW87319_Audio_Speaker(void);
 enum btsco_rates {
 	RATE_8KHZ_ID,
 	RATE_16KHZ_ID,
@@ -160,7 +163,7 @@ static struct afe_clk_set wsa_ana_clk = {
 	0,
 };
 
-static char const *rx_bit_format_text[] = {"S16_LE", "S24_LE", "S24_3LE"};
+static char const *rx_bit_format_text[] = {"S16_LE", "S24_LE"};
 static const char *const mi2s_ch_text[] = {"One", "Two"};
 static const char *const loopback_mclk_text[] = {"DISABLE", "ENABLE"};
 static const char *const btsco_rate_text[] = {"BTSCO_RATE_8KHZ",
@@ -263,33 +266,40 @@ static int enable_spk_ext_pa(struct snd_soc_codec *codec, int enable)
 {
 	struct snd_soc_card *card = codec->component.card;
 	struct msm8916_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
-	int ret;
-
+	//int ret;
+	#if 1
 	if (!gpio_is_valid(pdata->spk_ext_pa_gpio)) {
 		pr_err("%s: Invalid gpio: %d\n", __func__,
 			pdata->spk_ext_pa_gpio);
 		return false;
 	}
-
+	#endif
 	pr_debug("%s: %s external speaker PA\n", __func__,
 		enable ? "Enable" : "Disable");
 
 	if (enable) {
+		//AW87319_HW_ON();
+		#if 0
 		ret = msm_gpioset_activate(CLIENT_WCD_INT, "ext_spk_gpio");
 		if (ret) {
 			pr_err("%s: gpio set cannot be de-activated %s\n",
 					__func__, "ext_spk_gpio");
 			return ret;
 		}
+		#endif
 		gpio_set_value_cansleep(pdata->spk_ext_pa_gpio, enable);
+		AW87319_Audio_Speaker();
 	} else {
+		//AW87319_HW_OFF();
 		gpio_set_value_cansleep(pdata->spk_ext_pa_gpio, enable);
+		#if 0
 		ret = msm_gpioset_suspend(CLIENT_WCD_INT, "ext_spk_gpio");
 		if (ret) {
 			pr_err("%s: gpio set cannot be de-activated %s\n",
 					__func__, "ext_spk_gpio");
 			return ret;
 		}
+		#endif
 	}
 	return 0;
 }
@@ -361,7 +371,7 @@ static int msm_auxpcm_be_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	return 0;
 }
 
-static int msm_mi2s_rx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
+static int msm_pri_rx_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 				struct snd_pcm_hw_params *params)
 {
 	struct snd_interval *rate = hw_param_interval(params,
@@ -531,34 +541,22 @@ static int msm8952_get_port_id(int be_id)
 	}
 }
 
-static bool is_mi2s_rx_port(int port_id)
-{
-	bool ret = false;
-
-	switch (port_id) {
-	case AFE_PORT_ID_PRIMARY_MI2S_RX:
-	case AFE_PORT_ID_SECONDARY_MI2S_RX:
-	case AFE_PORT_ID_QUATERNARY_MI2S_RX:
-	case AFE_PORT_ID_QUINARY_MI2S_RX:
-		ret = true;
-		break;
-	default:
-		break;
-	}
-	return ret;
-}
-
 static uint32_t get_mi2s_rx_clk_val(int port_id)
 {
-	uint32_t clk_val = 0;
+	uint32_t clk_val;
 
 	/*
-	 *  Derive clock value based on sample rate, bits per sample and
-	 *  channel count is used as 2
+	 *  Derive clock value based on configuration of Primary MI2S rx port,
+	 *  as this port supports dynamic configuration for hifi audio
 	 */
-	if (is_mi2s_rx_port(port_id))
+	if (port_id == AFE_PORT_ID_PRIMARY_MI2S_RX) {
 		clk_val = (mi2s_rx_sample_rate * mi2s_rx_bits_per_sample * 2);
-
+	} else {
+		if (mi2s_rx_bit_format == SNDRV_PCM_FORMAT_S24_LE)
+			clk_val =  Q6AFE_LPASS_IBIT_CLK_3_P072_MHZ;
+		else
+			clk_val = Q6AFE_LPASS_IBIT_CLK_1_P536_MHZ;
+	}
 	pr_debug("%s: MI2S Rx bit clock value: 0x%0x\n", __func__, clk_val);
 	return clk_val;
 }
@@ -747,10 +745,6 @@ static int mi2s_rx_bit_format_get(struct snd_kcontrol *kcontrol,
 {
 
 	switch (mi2s_rx_bit_format) {
-	case SNDRV_PCM_FORMAT_S24_3LE:
-		ucontrol->value.integer.value[0] = 2;
-		break;
-
 	case SNDRV_PCM_FORMAT_S24_LE:
 		ucontrol->value.integer.value[0] = 1;
 		break;
@@ -772,10 +766,6 @@ static int mi2s_rx_bit_format_put(struct snd_kcontrol *kcontrol,
 	struct snd_ctl_elem_value *ucontrol)
 {
 	switch (ucontrol->value.integer.value[0]) {
-	case 2:
-		mi2s_rx_bit_format = SNDRV_PCM_FORMAT_S24_3LE;
-		mi2s_rx_bits_per_sample = 32;
-		break;
 	case 1:
 		mi2s_rx_bit_format = SNDRV_PCM_FORMAT_S24_LE;
 		mi2s_rx_bits_per_sample = 32;
@@ -1552,59 +1542,6 @@ static void *def_msm8952_wcd_mbhc_cal(void)
 	return msm8952_wcd_cal;
 }
 
-
-static int ext_spk_amp_gpio = -1;
-static int ext_ult_spk_amp_gpio = -1;
-//static int ext_ult_lo_amp_gpio = -1;
-static struct regulator *ext_spk_amp_regulator;
-
-static int msm8974_liquid_ext_spk_power_amp_init(struct platform_device *pdev)
-{
-	int ret = 0;
-
-	ext_spk_amp_gpio = of_get_named_gpio(pdev->dev.of_node,
-		"qcom,ext-spk-amp-gpio", 0);
-	if (ext_spk_amp_gpio >= 0) {
-		ret = gpio_request(ext_spk_amp_gpio, "ext_spk_amp_gpio");
-		if (ret) {
-			pr_err("%s: gpio_request failed for ext_spk_amp_gpio.\n",
-				__func__);
-			return -EINVAL;
-		}
-		gpio_direction_output(ext_spk_amp_gpio, 0);
-
-		if (ext_spk_amp_regulator == NULL) {
-			ext_spk_amp_regulator = regulator_get(&pdev->dev,
-									"qcom,ext-spk-amp");
-
-			if (IS_ERR(ext_spk_amp_regulator)) {
-				pr_err("%s: Cannot get regulator %s.\n",
-					__func__, "qcom,ext-spk-amp");
-
-				gpio_free(ext_spk_amp_gpio);
-				return PTR_ERR(ext_spk_amp_regulator);
-			}
-		}
-	}
-
-	ext_ult_spk_amp_gpio = of_get_named_gpio(pdev->dev.of_node,
-		"qcom,ext-ult-spk-amp-gpio", 0);
-
-	if (ext_ult_spk_amp_gpio >= 0) {
-		ret = gpio_request(ext_ult_spk_amp_gpio,
-						   "ext_ult_spk_amp_gpio");
-		if (ret) {
-			pr_err("%s: gpio_request failed for ext-ult_spk-amp-gpio.\n",
-				__func__);
-			return -EINVAL;
-		}
-		gpio_direction_output(ext_ult_spk_amp_gpio, 0);
-	}
-
-	return 0;
-}
-
-
 static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_codec *codec = rtd->codec;
@@ -1616,7 +1553,7 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_add_codec_controls(codec, msm_snd_controls,
 			ARRAY_SIZE(msm_snd_controls));
-	
+
 	snd_soc_dapm_new_controls(dapm, msm8952_dapm_widgets,
 			ARRAY_SIZE(msm8952_dapm_widgets));
 
@@ -1635,7 +1572,6 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_ignore_suspend(dapm, "DMIC1");
 	snd_soc_dapm_ignore_suspend(dapm, "DMIC2");
 	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK OUT");
-	snd_soc_dapm_ignore_suspend(dapm, "LINEOUT");
 
 	snd_soc_dapm_sync(dapm);
 
@@ -1651,7 +1587,7 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			return ret;
 		}
 	}
-	return 0;
+	return msm8x16_wcd_hs_detect(codec, &mbhc_cfg);
 }
 
 static struct snd_soc_ops msm8952_quat_mi2s_be_ops = {
@@ -2008,6 +1944,7 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 		.cpu_dai_name = "LSM1",
 		.platform_name = "msm-lsm-client",
 		.dynamic = 1,
+		.dpcm_playback = 1,
 		.dpcm_capture = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			SND_SOC_DPCM_TRIGGER_POST },
@@ -2293,24 +2230,6 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 		.ignore_pmdown_time = 1,
 		.be_id = MSM_FRONTEND_DAI_MULTIMEDIA8,
 	},
-	{/* hw:x,37 */
-		.name = "QCHAT",
-		.stream_name = "QCHAT",
-		.cpu_dai_name = "QCHAT",
-		.platform_name  = "msm-pcm-voice",
-		.dynamic = 1,
-		.dpcm_playback = 1,
-		.dpcm_capture = 1,
-		.codec_dai_name = "snd-soc-dummy-dai",
-		.codec_name = "snd-soc-dummy",
-		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
-			SND_SOC_DPCM_TRIGGER_POST},
-		.ignore_suspend = 1,
-		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
-		/* this dai link has playback support */
-		.ignore_pmdown_time = 1,
-		.be_id = MSM_FRONTEND_DAI_QCHAT,
-	},
 	/* Backend I2S DAI Links */
 	{
 		.name = LPASS_BE_PRI_MI2S_RX,
@@ -2325,7 +2244,7 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 			ASYNC_DPCM_SND_SOC_HW_PARAMS,
 		.be_id = MSM_BACKEND_DAI_PRI_MI2S_RX,
 		.init = &msm_audrx_init,
-		.be_hw_params_fixup = msm_mi2s_rx_be_hw_params_fixup,
+		.be_hw_params_fixup = msm_pri_rx_be_hw_params_fixup,
 		.ops = &msm8952_mi2s_be_ops,
 		.ignore_suspend = 1,
 	},
@@ -2339,7 +2258,7 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 		.no_pcm = 1,
 		.dpcm_playback = 1,
 		.be_id = MSM_BACKEND_DAI_SECONDARY_MI2S_RX,
-		.be_hw_params_fixup = msm_mi2s_rx_be_hw_params_fixup,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ops = &msm8952_sec_mi2s_be_ops,
 		.ignore_suspend = 1,
 	},
@@ -2369,7 +2288,7 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 		.no_pcm = 1,
 		.dpcm_playback = 1,
 		.be_id = MSM_BACKEND_DAI_QUATERNARY_MI2S_RX,
-		.be_hw_params_fixup = msm_mi2s_rx_be_hw_params_fixup,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ops = &msm8952_quat_mi2s_be_ops,
 		.ignore_pmdown_time = 1, /* dai link has playback support */
 		.ignore_suspend = 1,
@@ -2585,7 +2504,7 @@ static struct snd_soc_dai_link msm8952_hdmi_dba_dai_link[] = {
 		.no_pcm = 1,
 		.dpcm_playback = 1,
 		.be_id = MSM_BACKEND_DAI_QUINARY_MI2S_RX,
-		.be_hw_params_fixup = msm_mi2s_rx_be_hw_params_fixup,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ops = &msm8952_quin_mi2s_be_ops,
 		.ignore_pmdown_time = 1, /* dai link has playback support */
 		.ignore_suspend = 1,
@@ -2603,7 +2522,7 @@ static struct snd_soc_dai_link msm8952_quin_dai_link[] = {
 		.no_pcm = 1,
 		.dpcm_playback = 1,
 		.be_id = MSM_BACKEND_DAI_QUINARY_MI2S_RX,
-		.be_hw_params_fixup = msm_mi2s_rx_be_hw_params_fixup,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
 		.ops = &msm8952_quin_mi2s_be_ops,
 		.ignore_pmdown_time = 1, /* dai link has playback support */
 		.ignore_suspend = 1,
@@ -2759,7 +2678,7 @@ static int msm8952_populate_dai_link_component_of_node(
 	struct device *cdev = card->dev;
 	struct snd_soc_dai_link *dai_link = card->dai_link;
 	struct device_node *phandle;
-	
+
 	if (!cdev) {
 		pr_err("%s: Sound card device memory NULL\n", __func__);
 		return -ENODEV;
@@ -2791,7 +2710,6 @@ static int msm8952_populate_dai_link_component_of_node(
 				ret = -ENODEV;
 				goto err;
 			}
-			pr_err("== Encontré al platform-name: %s\n",dai_link[i].platform_name);
 			dai_link[i].platform_of_node = phandle;
 			dai_link[i].platform_name = NULL;
 		}
@@ -2811,8 +2729,6 @@ cpu_dai:
 				ret = -ENODEV;
 				goto err;
 			}
-			pr_err("-- Encontré al cpu_dai: %s\n",dai_link[i].cpu_dai_name);
-		
 			dai_link[i].cpu_of_node = phandle;
 			dai_link[i].cpu_dai_name = NULL;
 		}
@@ -2832,8 +2748,6 @@ codec_dai:
 				ret = -ENODEV;
 				goto err;
 			}
-			pr_err("++ Encontré al codec_dai: %s\n",dai_link[i].codec_name);
-
 			dai_link[i].codec_of_node = phandle;
 			dai_link[i].codec_name = NULL;
 		}
@@ -3230,23 +3144,12 @@ parse_mclk_freq:
 	if (ret)
 		goto err;
 
-	//Agregado por Eduardo Noyer
-	pr_err("Intentando iniciar a mano el gpio");
-	ret = msm8974_liquid_ext_spk_power_amp_init(pdev);
-	if (ret) {
-		pr_err("%s: LiQUID 8974 CLASS_D PAs init failed (%d)\n",
-			__func__, ret);
-		goto err;
-	}
-	
-
 	ret = msm8952_populate_dai_link_component_of_node(card);
 	if (ret) {
 		ret = -EPROBE_DEFER;
 		goto err;
 	}
-	
-		
+
 	ret = snd_soc_register_card(card);
 	if (ret) {
 		dev_err(&pdev->dev, "snd_soc_register_card failed (%d)\n",
@@ -3281,10 +3184,6 @@ static int msm8952_asoc_machine_remove(struct platform_device *pdev)
 	struct msm8916_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
 	int i;
 
-	//Agregado por Eduardo Noyer
-	if (ext_spk_amp_regulator)
-		regulator_put(ext_spk_amp_regulator);
-	
 	if (pdata->vaddr_gpio_mux_spkr_ctl)
 		iounmap(pdata->vaddr_gpio_mux_spkr_ctl);
 	if (pdata->vaddr_gpio_mux_mic_ctl)
