@@ -11,17 +11,11 @@ echo "> Abriendo archivo de configuracion"
 CFLAGS="-mtune=cortex-a53" ARCH=arm64 CROSS_COMPILE=../../aarch64-linux-android-4.9-kernel/bin/aarch64-linux-android- make menuconfig
 echo "> Iniciando compilacion del kernel usando .config"
 CFLAGS="-mtune=cortex-a53" ARCH=arm64 CROSS_COMPILE=../../aarch64-linux-android-4.9-kernel/bin/aarch64-linux-android- make -j4
-#echo "> COMPILANDO santoni.dts en santoni.dtb"
-dtc -I dts -O dtb -o ../boot_miui_official/dtb/msm8916-0061.dtb ../boot_miui_official/dtb/msm8916-0061.dts
-#echo "> Copiando santoni-fdt.dtb a arhc/arm64/boot/"
-#cp ../boot_stock_kernel/santoni_stock.fdt arch/arm64/boot/santoni-fdt.dtb
-echo "> COMBINANDO Kernel con DTB en kernel.img-dtb"
-cat arch/arm64/boot/Image.gz ../boot_miui_official/dtb/msm8916-0061.dtb > arch/arm64/boot/kernel.img-dtb
 echo ""
 echo "> Eliminando boot.img viejo"
 rm arch/arm64/boot/boot.img
 echo "> EMPAQUETANDO Kernel..."
-./../mkbootimg/mkbootimg --kernel arch/arm64/boot/kernel.img-dtb --ramdisk arch/arm64/boot/boot.img-ramdisk.cpio.gz --cmdline 'console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci earlycon=msm_hsl_uart,0x78B0000 buildvariant=user' --base 0x80000000 -o arch/arm64/boot/boot.img
+./../mkbootimg/mkbootimg --kernel arch/arm64/boot/Image.gz-dtb --ramdisk arch/arm64/boot/boot.img-ramdisk.cpio.gz --cmdline 'console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci earlycon=msm_hsl_uart,0x78B0000 buildvariant=user' --base 0x80000000 -o arch/arm64/boot/boot.img
 #echo "> ELIMINANDO MODULOS ANTERIORES"
 #rm -rf /media/psf/Home/Desktop/kmodules
 #mkdir /media/psf/Home/Desktop/kmodules
