@@ -3,8 +3,8 @@ echo "WAFF WAFF WAFF WAFF WAFF WAFF WAFF WAFF"
 echo "########### LOBO UTILIDADES ###########"
 echo "WAFF WAFF WAFF WAFF WAFF WAFF WAFF WAFF"
 echo ""
-echo "> Copiando archivo de configuracion"
-cp ../boot_miui_official/msm8940_defconfig .config
+#echo "> Copiando archivo de configuracion"
+#cp ../boot_miui_official/msm8940_defconfig .config
 echo "> Copiando ramdisk a arch/arm64/boot"
 cp ../generated_boot_img/initramfs.cpio.gz arch/arm64/boot/boot.img-ramdisk.cpio.gz
 echo "> Abriendo archivo de configuracion"
@@ -12,11 +12,11 @@ CFLAGS="-mtune=cortex-a53" ARCH=arm64 CROSS_COMPILE=../../aarch64-linux-android-
 echo "> Iniciando compilacion del kernel usando .config"
 CFLAGS="-mtune=cortex-a53" ARCH=arm64 CROSS_COMPILE=../../aarch64-linux-android-4.9-kernel/bin/aarch64-linux-android- make -j4
 #echo "> COMPILANDO santoni.dts en santoni.dtb"
-#dtc -I dts -O dtb -o arch/arm64/boot/santoni-fdt.dtb ../boot_miui_official/msm8940-0061.dts
+dtc -I dts -O dtb -o ../boot_miui_official/dtb/msm8916-0061.dtb ../boot_miui_official/dtb/msm8916-0061.dts
 #echo "> Copiando santoni-fdt.dtb a arhc/arm64/boot/"
 #cp ../boot_stock_kernel/santoni_stock.fdt arch/arm64/boot/santoni-fdt.dtb
 echo "> COMBINANDO Kernel con DTB en kernel.img-dtb"
-cat arch/arm64/boot/Image.gz ../boot_miui_official/dtb/*.dtb > arch/arm64/boot/kernel.img-dtb
+cat arch/arm64/boot/Image.gz ../boot_miui_official/dtb/msm8916-0061.dtb > arch/arm64/boot/kernel.img-dtb
 echo ""
 echo "> Eliminando boot.img viejo"
 rm arch/arm64/boot/boot.img
