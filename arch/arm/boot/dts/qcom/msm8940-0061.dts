@@ -6189,9 +6189,9 @@
 				ftech,irq-gpio = <0xa7 0x41 0x2008>; //a7
 				ftech,display-coords = <0x0 0x0 0x2d0 0x500>;
 				ftech,panel-coords = <0x0 0x0 0x2d0 0x500>;
-				ftech,virtual-key1 = <139 180 2000>;  //<0x8b 0x8c 0x7d0>; //menu
-				ftech,virtual-key2 = <172 540 2000>; //<0xac 0x168 0x7d0>; //home
-				ftech,virtual-key3 = <158 900 2000>;//<0x9e 0x244 0x7d0>; //back
+				ftech,virtual-key1 = <0x8b 0x8c 0x7d0>; //menu
+				ftech,virtual-key2 = <0xac 0x168 0x7d0>; //home
+				ftech,virtual-key3 = <0x9e 0x244 0x7d0>; //back
 				ftech,no-force-update;
 				ftech,i2c-pull-up;
 				ftech,group-id = <0x1>;
@@ -11459,7 +11459,7 @@
 			qcom,disp-maxy = <0x500>;
 			qcom,panel-maxx = <0x2d0>;
 			qcom,panel-maxy = <0x5b2>;
-			qcom,key-codes = <139 172 158>; //<0x8b 0xac 0x9e>;
+			qcom,key-codes = <0x8b 0xac 0x9e>;
 			qcom,y-offset = <0x0>;
 		};
 

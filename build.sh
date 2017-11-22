@@ -6,7 +6,7 @@ echo ""
 #echo "> Copiando archivo de configuracion"
 #cp ../boot_miui_official/msm8940_defconfig .config
 echo "> Copiando ramdisk a arch/arm64/boot"
-cp ../generated_boot_img/initramfs.cpio.gz arch/arm64/boot/boot.img-ramdisk.cpio.gz
+cp ../boot_aosp_caf_booted/new-ramdisk.cpio.gz arch/arm64/boot/boot.img-ramdisk.cpio.gz
 echo "> Abriendo archivo de configuracion"
 CFLAGS="-mtune=cortex-a53" ARCH=arm64 CROSS_COMPILE=../../aarch64-linux-android-4.9-kernel/bin/aarch64-linux-android- make menuconfig
 echo "> Iniciando compilacion del kernel usando .config"
@@ -15,7 +15,7 @@ echo ""
 echo "> Eliminando boot.img viejo"
 rm arch/arm64/boot/boot.img
 echo "> EMPAQUETANDO Kernel..."
-./../mkbootimg/mkbootimg --kernel arch/arm64/boot/Image.gz-dtb --ramdisk arch/arm64/boot/boot.img-ramdisk.cpio.gz --cmdline 'console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci earlycon=msm_hsl_uart,0x78B0000 buildvariant=user' --base 0x80000000 -o arch/arm64/boot/boot.img
+./../mkbootimg/mkbootimg --kernel arch/arm64/boot/Image.gz-dtb --ramdisk arch/arm64/boot/boot.img-ramdisk.cpio.gz --cmdline 'console=ttyHSL0,115200,n8 androidboot.console=ttyHSL0 androidboot.hardware=qcom msm_rtb.filter=0x237 ehci-hcd.park=3 lpm_levels.sleep_disabled=1 androidboot.bootdevice=7824900.sdhci earlycon=msm_hsl_uart,0x78B0000 buildvariant=eng androidboot.selinux=permissive' --base 0x80000000 -o arch/arm64/boot/boot.img
 #echo "> ELIMINANDO MODULOS ANTERIORES"
 #rm -rf /media/psf/Home/Desktop/kmodules
 #mkdir /media/psf/Home/Desktop/kmodules
