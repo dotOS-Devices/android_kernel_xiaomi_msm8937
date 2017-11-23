@@ -32,11 +32,13 @@
 #include <linux/wakelock.h>
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-#define AW87319_RST         48
+//We changed the gpio to the one that appeared in dts.
+//Improve ideas: read gpio pin from qcom,ext_pa_spk_aw87319_rst directly. 
+#define AW87319_RST      0x7c //48
 
 #define AW87319_I2C_NAME		"AW87319_PA"
 #define AW87319_I2C_BUS		0
-#define AW87319_I2C_ADDR		0x58
+#define AW87319_I2C_ADDR	0x58
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 unsigned char AW87319_HW_ON(void);
 unsigned char AW87319_HW_OFF(void);
@@ -316,6 +318,7 @@ static int AW87319_i2c_probe(struct i2c_client *client, const struct i2c_device_
 	while(cnt>0)
 	{
 		I2C_write_reg(0x64, 0x2C);
+		
 		reg_value = I2C_read_reg(0x00);
 		printk("AW87319 CHIPID=0x%2x\n", reg_value);
 		if(reg_value == 0x9B)
