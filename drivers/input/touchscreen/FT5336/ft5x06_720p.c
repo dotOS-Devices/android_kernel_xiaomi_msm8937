@@ -232,6 +232,9 @@ static int ft5x06_i2c_read(struct i2c_client *client, char *writebuf,
 			   int writelen, char *readbuf, int readlen)
 {
 	int ret;
+	
+	//Bitrvmpd - Fix unresponsive touchscreen
+	client->addr = 0x3e;
 
 	if (writelen > 0) {
 		struct i2c_msg msgs[] = {

@@ -6172,9 +6172,9 @@
 			dma-names = "tx", "rx";
 			status = "ok";
 
-			ftech@3e {
+			ftech@38 {
 				compatible = "focaltech,5336";
-				reg = <0x3e>; // 38
+				reg = <0x38>; // 38
 				interrupt-parent = <0xa7>; // a7
 				interrupts = <0x41 0x2008>;
 				vdd-supply = <0xcd>; // cd
