@@ -34,15 +34,15 @@
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //We changed the gpio to the one that appeared in dts.
 //Improve ideas: read gpio pin from qcom,ext_pa_spk_aw87319_rst directly. 
-#define AW87319_RST      0x7c //48
+#define AW87319_RST     0x7c 
 
 #define AW87319_I2C_NAME		"AW87319_PA"
 #define AW87319_I2C_BUS		0
 #define AW87319_I2C_ADDR	0x58
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-unsigned char AW87319_HW_ON(void);
-unsigned char AW87319_HW_OFF(void);
 unsigned char AW87319_Audio_Speaker(void);
+static unsigned char AW87319_HW_ON(void);
+static unsigned char AW87319_HW_OFF(void);
 static ssize_t AW87319_get_reg(struct device* cd,struct device_attribute *attr, char* buf);
 static ssize_t AW87319_set_reg(struct device* cd, struct device_attribute *attr,const char* buf, size_t len);
 static ssize_t AW87319_set_swen(struct device* cd, struct device_attribute *attr,const char* buf, size_t len);
@@ -81,7 +81,7 @@ static void AW87319_pa_pwroff(void)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // i2c write and read
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
-unsigned char I2C_write_reg(unsigned char addr, unsigned char reg_data)
+static unsigned char I2C_write_reg(unsigned char addr, unsigned char reg_data)
 {
 	char ret;
 	u8 wdbuf[512] = {0};
@@ -105,7 +105,7 @@ unsigned char I2C_write_reg(unsigned char addr, unsigned char reg_data)
     return ret;
 }
 
-unsigned char I2C_read_reg(unsigned char addr)
+static unsigned char I2C_read_reg(unsigned char addr)
 {
 	unsigned char ret;
 	u8 rdbuf[512] = {0};
@@ -159,16 +159,8 @@ unsigned char AW87319_Audio_Speaker(void)
 	return 0;
 }
 
-unsigned char AW87319_Audio_OFF(void)
-{
-	if(i2c_ok < 0)
-	{
-	  return 0;
-	}
-	AW87319_HW_OFF();
-	return 0;
-}
-unsigned char AW87319_SW_ON(void)
+
+static unsigned char AW87319_SW_ON(void)
 {
 	unsigned char reg;
 	reg = I2C_read_reg(0x01);
@@ -178,7 +170,7 @@ unsigned char AW87319_SW_ON(void)
 	return 0;
 }
 
-unsigned char AW87319_SW_OFF(void)
+static unsigned char AW87319_SW_OFF(void)
 {
 	unsigned char reg;
 	reg = I2C_read_reg(0x01);
@@ -188,7 +180,7 @@ unsigned char AW87319_SW_OFF(void)
 	return 0;
 }
 
-unsigned char AW87319_HW_ON(void)
+static unsigned char AW87319_HW_ON(void)
 {
 	AW87319_pa_pwron();
 	I2C_write_reg(0x64, 0x2C);
