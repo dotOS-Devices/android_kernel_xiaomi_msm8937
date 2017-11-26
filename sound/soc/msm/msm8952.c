@@ -690,13 +690,14 @@ static void msm8952_ext_hs_delay_enable(struct work_struct *work)
 static void msm8952_ext_spk_control(u32 enable)
 {
 	int i = 0;
-
+	spk_pa_gpio = 0x7c;
 	if (enable) {
 		/* Open external audio PA device */
 		for (i = 0; i < AW8738_MODE; i++) {
 			gpio_direction_output(spk_pa_gpio, false);
 			gpio_direction_output(spk_pa_gpio, true);
 		}
+		AW87319_Audio_Speaker();	
 		usleep_range(EXT_CLASS_D_EN_DELAY,
 		EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
 	} else {
@@ -713,12 +714,13 @@ static void msm8952_ext_spk_control(u32 enable)
 static void msm8952_ext_spk__delayed_enable(struct work_struct *work)
 {
 	int i = 0;
-
+	spk_pa_gpio = 0x7c;
 	/* Open external audio PA device */
 	for (i = 0; i < AW8738_MODE; i++) {
 		gpio_direction_output(spk_pa_gpio, false);
 		gpio_direction_output(spk_pa_gpio, true);
 	}
+	AW87319_Audio_Speaker();
 	usleep_range(EXT_CLASS_D_EN_DELAY,
 	EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
 
@@ -728,7 +730,7 @@ static void msm8952_ext_spk__delayed_enable(struct work_struct *work)
 static void msm8x16_ext_spk_delayed_dualmode(struct work_struct *work)
 {
 	int i = 0;
-
+	spk_pa_gpio = 0x7c;
 	/* Open the headset device */
 	gpio_direction_output(headset_gpio, true);
 	usleep_range(EXT_CLASS_D_EN_DELAY,
@@ -738,6 +740,7 @@ static void msm8x16_ext_spk_delayed_dualmode(struct work_struct *work)
 		gpio_direction_output(spk_pa_gpio, false);
 		gpio_direction_output(spk_pa_gpio, true);
 	}
+	AW87319_Audio_Speaker();
 	usleep_range(EXT_CLASS_D_EN_DELAY,
 		EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
 
@@ -3124,9 +3127,9 @@ parse_mclk_freq:
 		dev_err(&pdev->dev,
 		"%s: error! headset_gpio is :%d\n", __func__, headset_gpio);
 	} else {
-		if (gpio_request_one(headset_gpio, GPIOF_DIR_OUT, "headset_enable")) {
-			pr_err("%s: request headset_gpio fail!\n", __func__);
-		}
+		//if (gpio_request_one(headset_gpio, GPIOF_DIR_OUT, "headset_enable")) {
+		//	pr_err("%s: request headset_gpio fail!\n", __func__);
+		//}
 	}
 	pr_err("%s: [hjf] request headset_gpio is %d!\n", __func__, headset_gpio);
 
