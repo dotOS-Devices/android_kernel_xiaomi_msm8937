@@ -1710,8 +1710,8 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	snd_soc_dapm_sync(dapm);
 	
 	//Habilitando el speaker!
-	pr_err("%s():Haciendo la llamada para habilitar al speaker...",__func__);
-	enable_spk_ext_pa(codec,true);
+	//pr_err("%s():Haciendo la llamada para habilitar al speaker...",__func__);
+	//enable_spk_ext_pa(codec,true);
 	msm8x16_wcd_spk_ext_pa_cb(enable_spk_ext_pa, codec);
 
 	mbhc_cfg.calibration = def_msm8952_wcd_mbhc_cal();
@@ -1975,7 +1975,7 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 		.ignore_pmdown_time = 1,
 		.be_id = MSM_FRONTEND_DAI_MULTIMEDIA5,
 	},
-	/* {  // hw:x,13 
+	{  // hw:x,13 
 		.name = "Voice2",
 		.stream_name = "Voice2",
 		.cpu_dai_name   = "Voice2",
@@ -1992,7 +1992,7 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
 		.be_id = MSM_FRONTEND_DAI_VOICE2,
-	},*/
+	},
 	{/* hw:x,14 */
 		.name = "MSM8x16 Media9",
 		.stream_name = "MultiMedia9",
@@ -2010,7 +2010,7 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 		.ignore_pmdown_time = 1,
 		.be_id = MSM_FRONTEND_DAI_MULTIMEDIA9,
 	},
-	/*{ // hw:x,15 
+	{ // hw:x,15 
 		.name = "VoLTE",
 		.stream_name = "VoLTE",
 		.cpu_dai_name   = "VoLTE",
@@ -2044,7 +2044,7 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
 		.be_id = MSM_FRONTEND_DAI_VOWLAN,
-	},*/
+	},
 	{/* hw:x,17 */
 		.name = "INT_HFP_BT Hostless",
 		.stream_name = "INT_HFP_BT Hostless",
@@ -2322,7 +2322,7 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 		 /* this dai link has playback support */
 		.be_id = MSM_FRONTEND_DAI_MULTIMEDIA16,
 	},
-	/*{// hw:x,34 
+	{// hw:x,34 
 		.name = "VoiceMMode1",
 		.stream_name = "VoiceMMode1",
 		.cpu_dai_name   = "VoiceMMode1",
@@ -2355,7 +2355,7 @@ static struct snd_soc_dai_link msm8952_dai[] = {
 		.codec_dai_name = "snd-soc-dummy-dai",
 		.codec_name = "snd-soc-dummy",
 		.be_id = MSM_FRONTEND_DAI_VOICEMMODE2,
-	},*/
+	},
 	{/* hw:x,36 */
 		.name = "MSM8916 HFP Loopback2",
 		.stream_name = "MultiMedia8",
