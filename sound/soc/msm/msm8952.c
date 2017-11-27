@@ -74,7 +74,6 @@ static int msm_pri_mi2s_rx_ch = 1;
 static int msm_proxy_rx_ch = 2;
 static int msm_vi_feed_tx_ch = 2;
 static int mi2s_rx_bit_format = SNDRV_PCM_FORMAT_S16_LE;
-//static int mi2s_rx_bits_per_sample = 16;
 static int mi2s_rx_sample_rate = SAMPLING_RATE_48KHZ;
 
 static atomic_t quat_mi2s_clk_ref;
@@ -231,9 +230,7 @@ static const struct snd_soc_dapm_widget msm8952_dapm_widgets[] = {
 int is_ext_spk_gpio_support(struct platform_device *pdev,
 			struct msm8916_asoc_mach_data *pdata)
 {
-	//const char *spk_ext_pa = "qcom,msm-spk-ext-pa";
 	const char *spk_ext_pa = "spk-ext-amp-gpio";
-	pr_err("Bitrvmpd - modification!");
 	pr_err("%s:Enter\n", __func__);
 
 	pdata->spk_ext_pa_gpio = of_get_named_gpio(pdev->dev.of_node,
@@ -255,8 +252,6 @@ static int enable_spk_ext_pa(struct snd_soc_codec *codec, int enable)
 {
 	struct snd_soc_card *card = codec->component.card;
 	struct msm8916_asoc_mach_data *pdata = snd_soc_card_get_drvdata(card);
-	pdata->spk_ext_pa_gpio = 0x7c;
-	pr_err("%s():Verificando si el gpio es valido...",__func__);
 	if (!gpio_is_valid(pdata->spk_ext_pa_gpio)) {
 		pr_err("%s: Invalid gpio: %d\n", __func__,
 			pdata->spk_ext_pa_gpio);
@@ -689,14 +684,8 @@ static void msm8952_ext_hs_delay_enable(struct work_struct *work)
 
 static void msm8952_ext_spk_control(u32 enable)
 {
-	int i = 0;
-	spk_pa_gpio = 0x7c;
 	if (enable) {
 		/* Open external audio PA device */
-		for (i = 0; i < AW8738_MODE; i++) {
-			gpio_direction_output(spk_pa_gpio, false);
-			gpio_direction_output(spk_pa_gpio, true);
-		}
 		AW87319_Audio_Speaker();	
 		usleep_range(EXT_CLASS_D_EN_DELAY,
 		EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
@@ -713,13 +702,7 @@ static void msm8952_ext_spk_control(u32 enable)
 
 static void msm8952_ext_spk__delayed_enable(struct work_struct *work)
 {
-	int i = 0;
-	spk_pa_gpio = 0x7c;
 	/* Open external audio PA device */
-	for (i = 0; i < AW8738_MODE; i++) {
-		gpio_direction_output(spk_pa_gpio, false);
-		gpio_direction_output(spk_pa_gpio, true);
-	}
 	AW87319_Audio_Speaker();
 	usleep_range(EXT_CLASS_D_EN_DELAY,
 	EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
@@ -729,17 +712,11 @@ static void msm8952_ext_spk__delayed_enable(struct work_struct *work)
 
 static void msm8x16_ext_spk_delayed_dualmode(struct work_struct *work)
 {
-	int i = 0;
-	spk_pa_gpio = 0x7c;
 	/* Open the headset device */
 	gpio_direction_output(headset_gpio, true);
 	usleep_range(EXT_CLASS_D_EN_DELAY,
 		EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
 
-	for (i = 0; i < AW8738_MODE; i++) {
-		gpio_direction_output(spk_pa_gpio, false);
-		gpio_direction_output(spk_pa_gpio, true);
-	}
 	AW87319_Audio_Speaker();
 	usleep_range(EXT_CLASS_D_EN_DELAY,
 		EXT_CLASS_D_EN_DELAY + EXT_CLASS_D_DELAY_DELTA);
@@ -1709,9 +1686,6 @@ static int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 
 	snd_soc_dapm_sync(dapm);
 	
-	//Habilitando el speaker!
-	//pr_err("%s():Haciendo la llamada para habilitar al speaker...",__func__);
-	//enable_spk_ext_pa(codec,true);
 	msm8x16_wcd_spk_ext_pa_cb(enable_spk_ext_pa, codec);
 
 	mbhc_cfg.calibration = def_msm8952_wcd_mbhc_cal();
@@ -2817,7 +2791,6 @@ static int msm8952_populate_dai_link_component_of_node(
 		/* populate platform_of_node for snd card dai links */
 		if (dai_link[i].platform_name &&
 				!dai_link[i].platform_of_node) {
-			//pr_err("[Bitrvpmd]: Looking for platform-name: %s\n", dai_link[i].platform_name);
 			index = of_property_match_string(cdev->of_node,
 					"asoc-platform-names",
 					dai_link[i].platform_name);
@@ -2843,7 +2816,6 @@ static int msm8952_populate_dai_link_component_of_node(
 cpu_dai:
 		/* populate cpu_of_node for snd card dai links */
 		if (dai_link[i].cpu_dai_name && !dai_link[i].cpu_of_node) {
-			//pr_err("[Bitrvpmd]: Looking for cpu-dai: %s\n", dai_link[i].cpu_dai_name);
 			index = of_property_match_string(cdev->of_node,
 					"asoc-cpu-names",
 					dai_link[i].cpu_dai_name);
@@ -2863,7 +2835,6 @@ cpu_dai:
 codec_dai:
 		/* populate codec_of_node for snd card dai links */
 		if (dai_link[i].codec_name && !dai_link[i].codec_of_node) {
-			//pr_err("[Bitrvpmd]: Looking for codec-name: %s\n", dai_link[i].codec_name);
 			index = of_property_match_string(cdev->of_node,
 					"asoc-codec-names",
 					dai_link[i].codec_name);
@@ -2877,8 +2848,6 @@ codec_dai:
 				ret = -ENODEV;
 				goto err;
 			}
-			//pr_err("%s: codec dai %s failed\n",
-			//		__func__, dai_link[i].codec_name);
 			dai_link[i].codec_of_node = phandle;
 			dai_link[i].codec_name = NULL;
 		}
@@ -3002,7 +2971,6 @@ static int msm8952_asoc_machine_probe(struct platform_device *pdev)
 	int ret, id, i, val;
 	struct resource	*muxsel;
 	char *temp_str = NULL;
-	//unsigned long flags;
 
 	pdata = devm_kzalloc(&pdev->dev,
 			sizeof(struct msm8916_asoc_mach_data), GFP_KERNEL);
@@ -3084,41 +3052,6 @@ parse_mclk_freq:
 	if (spk_pa_gpio < 0) {
 		dev_err(&pdev->dev,
 		"%s: error! spk_pa_gpio is :%d\n", __func__, spk_pa_gpio);
-	} else {
-		//Activacion del gpio
-		/*ret = msm_gpioset_activate(CLIENT_WCD_EXT, "ext_spk_gpio");
-		if (ret) {
-			pr_err("%s: gpio set cannot be de-activated %s\n",
-					__func__, "ext_spk_gpio");
-		}
-		local_irq_save(flags);
-		gpio_set_value_cansleep(spk_pa_gpio, false);
-		msleep(1);
-		gpio_set_value_cansleep(spk_pa_gpio, true);
-		udelay(2);
-		gpio_set_value_cansleep(spk_pa_gpio, false);
-		udelay(2);
-		gpio_set_value_cansleep(spk_pa_gpio, true);
-		udelay(2);
-		gpio_set_value_cansleep(spk_pa_gpio, false);
-		udelay(2);
-		gpio_set_value_cansleep(spk_pa_gpio, true);
-		udelay(2);
-		gpio_set_value_cansleep(spk_pa_gpio, false);
-		udelay(2);
-		gpio_set_value_cansleep(spk_pa_gpio, true);
-		udelay(2);
-		gpio_set_value_cansleep(spk_pa_gpio, false);
-		udelay(2);
-		local_irq_restore(flags);
-
-
-		msleep(1);*/
-
-		//.Activacion del gpio	
-		//if (gpio_request_one(spk_pa_gpio, GPIOF_DIR_OUT, "spk_enable")) {
-		//	pr_err("%s: request spk_pa_gpio  fail!\n", __func__);
-		//}
 	}
 	pr_err("%s: [hjf] request spk_pa_gpio is %d!\n", __func__, spk_pa_gpio);
 
@@ -3126,11 +3059,7 @@ parse_mclk_freq:
 	if (headset_gpio < 0) {
 		dev_err(&pdev->dev,
 		"%s: error! headset_gpio is :%d\n", __func__, headset_gpio);
-	} else {
-		//if (gpio_request_one(headset_gpio, GPIOF_DIR_OUT, "headset_enable")) {
-		//	pr_err("%s: request headset_gpio fail!\n", __func__);
-		//}
-	}
+	} 
 	pr_err("%s: [hjf] request headset_gpio is %d!\n", __func__, headset_gpio);
 
 	/*reading the gpio configurations from dtsi file*/
