@@ -6,7 +6,7 @@ echo ""
 #echo "> Copiando archivo de configuracion"
 #cp ../boot_miui_official/msm8940_defconfig .config
 echo "> Copiando ramdisk a arch/arm64/boot"
-cp ../boot_aosp_caf_booted/initramfs.cpio.gz arch/arm64/boot/boot.img-ramdisk.cpio.gz
+cp ../generated_boot_img/initramfs.cpio.gz arch/arm64/boot/boot.img-ramdisk.cpio.gz
 echo "> Abriendo archivo de configuracion"
 CFLAGS="-mtune=cortex-a53" ARCH=arm64 CROSS_COMPILE=../../aarch64-linux-android-4.9-kernel/bin/aarch64-linux-android- make menuconfig
 echo "> Iniciando compilacion del kernel usando .config"
